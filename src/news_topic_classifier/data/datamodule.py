@@ -30,7 +30,7 @@ def build_vocab(texts: Iterable[str], max_vocab_size: int, min_freq: int) -> Voc
     for t in texts:
         counter.update(simple_tokenize(t))
 
-    itos = ["<pad>", "<unk>"]  # special tokens
+    itos = ["<pad>", "<unk>"]
     for token, freq in counter.most_common(max_vocab_size - len(itos)):
         if freq < min_freq:
             break
@@ -42,7 +42,7 @@ def build_vocab(texts: Iterable[str], max_vocab_size: int, min_freq: int) -> Voc
 
 def encode(text: str, vocab: Vocab, max_length: int) -> tuple[list[int], list[int]]:
     tokens = simple_tokenize(text)[:max_length]
-    ids = [vocab.stoi.get(tok, 1) for tok in tokens]  # 1 = <unk>
+    ids = [vocab.stoi.get(tok, 1) for tok in tokens]
     mask = [1] * len(ids)
     return ids, mask
 
@@ -56,7 +56,7 @@ def collate_batch(batch: list[dict]) -> dict:
         ids = x["input_ids"]
         mask = x["attention_mask"]
         pad = max_len - len(ids)
-        input_ids.append(ids + [0] * pad)  # 0 = <pad>
+        input_ids.append(ids + [0] * pad)
         attention_mask.append(mask + [0] * pad)
         labels.append(x["labels"])
 
@@ -136,7 +136,6 @@ class AGNewsDataModule(LightningDataModule):
         if uniq == [1, 2, 3, 4]:
             train = train.map(lambda ex: {"labels": int(ex["labels"]) - 1})
 
-        # Если labels = ClassLabel (как после download.py), стратификация будет работать нормально.
         try:
             split = train.train_test_split(
                 test_size=self.val_size,

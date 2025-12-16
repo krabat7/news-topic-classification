@@ -18,7 +18,6 @@ def _run_dvc_pull(repo_root: Path, target: Path) -> None:
             text=True,
         )
     except FileNotFoundError:
-        # dvc is not installed
         return
 
 

@@ -14,11 +14,10 @@ class MeanPoolClassifier(nn.Module):
         self.classifier = nn.Linear(embedding_dim, num_classes)
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
-        # input_ids: [B, T], attention_mask: [B, T] (1 for tokens, 0 for pad)
-        emb = self.embedding(input_ids)  # [B, T, D]
-        mask = attention_mask.unsqueeze(-1)  # [B, T, 1]
-        summed = (emb * mask).sum(dim=1)  # [B, D]
-        denom = mask.sum(dim=1).clamp_min(1.0)  # [B, 1]
+        emb = self.embedding(input_ids)
+        mask = attention_mask.unsqueeze(-1)
+        summed = (emb * mask).sum(dim=1)
+        denom = mask.sum(dim=1).clamp_min(1.0)
         pooled = summed / denom
         pooled = self.dropout(pooled)
         return self.classifier(pooled)

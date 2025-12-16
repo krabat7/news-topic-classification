@@ -50,7 +50,6 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
 
     set_seed(int(cfg.seed))
 
-    # 1) Гарантируем данные (DVC pull или скачивание), чтобы не ходить в интернет
     data_dir_cfg = getattr(cfg.data, "data_dir", None)
     data_dir_path = repo_root / str(data_dir_cfg) if data_dir_cfg is not None else None
 
@@ -62,7 +61,6 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
             text_joiner=str(cfg.data.text_joiner),
         )
 
-    # 2) DataModule читает load_from_disk(data_dir)
     dm = AGNewsDataModule(
         dataset_name=str(cfg.data.dataset_name),
         text_joiner=str(cfg.data.text_joiner),
