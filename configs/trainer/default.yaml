@@ -1,0 +1,6 @@
+max_epochs: 1
+accelerator: cpu
+devices: 1
+log_every_n_steps: 50
+enable_checkpointing: true
+deterministic: true

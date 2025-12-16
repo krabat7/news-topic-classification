@@ -1,0 +1,12 @@
+defaults:
+  - data: ag_news
+  - model: baseline
+  - trainer: default
+  - logging: mlflow
+  - _self_
+
+seed: 42
+batch_size: 64
+lr: 3e-4
+max_length: 256
+num_workers: 0

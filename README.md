@@ -31,5 +31,5 @@ poetry run pre-commit install
 poetry run pre-commit run -a
 
 ## Train
-(будет добавлено в Task 2)
-poetry run python -m news_topic_classifier.commands train
+python -m poetry run python -m news_topic_classifier.commands train
+python -m poetry run python -m news_topic_classifier.commands train trainer.max_epochs=1 batch_size=32

@@ -1,0 +1,26 @@
+defaults:
+  - data: ag_news
+  - model: baseline
+  - _self_
+
+seed: 42
+batch_size: 64
+lr: 3e-4
+max_length: 256
+
+infer:
+  ckpt_path: outputs/checkpoints/best.ckpt
+  use_cuda: false
+  print_config: false
+
+  class_names:
+    - World
+    - Sports
+    - Business
+    - Sci/Tech
+
+  texts:
+    - "Oil prices rise as tensions grow in the Middle East"
+    - "Local team wins the championship after dramatic final"
+    - "Company reports record quarterly earnings and stock jumps"
+    - "New AI model achieves state of the art results on benchmarks"
