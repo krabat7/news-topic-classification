@@ -68,7 +68,7 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
         min_freq=int(cfg.data.min_freq),
         max_length=int(cfg.max_length),
         seed=int(cfg.seed),
-        data_dir=str(data_dir),
+        data_dir=str((repo_root / str(cfg.paths.data_dir)).as_posix()),
     )
     dm.setup()
     if dm.vocab is None:
