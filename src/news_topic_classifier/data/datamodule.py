@@ -101,17 +101,18 @@ class AGNewsDataModule(LightningDataModule):
     def _load(self):
         if self.data_dir is not None:
             p = Path(self.data_dir)
-            if p.exists():
-                return load_from_disk(str(p))
+            if not p.exists():
+                raise FileNotFoundError(
+                    f"Data dir not found: {p}. "
+                    "Run train/infer which should call ensure_data() (DVC pull / download)."
+                )
+            return load_from_disk(str(p))
         return load_dataset(self.dataset_name)
 
     def setup(self, stage: str | None = None) -> None:
         ds = self._load()
-
         train = ds["train"]
 
-        # Expect "text" and "labels" after our download step.
-        # But keep it robust in case someone runs without download.
         def to_text(example: dict) -> dict:
             title = example.get("title", "")
             desc = example.get("description", "")
@@ -131,12 +132,11 @@ class AGNewsDataModule(LightningDataModule):
             else:
                 raise ValueError(f"No labels column found. Columns: {train.column_names}")
 
-        # If labels are 1..4 -> make 0..3
         uniq = sorted(set(train["labels"]))
         if uniq == [1, 2, 3, 4]:
             train = train.map(lambda ex: {"labels": int(ex["labels"]) - 1})
 
-        # split with stratify (works if ClassLabel; if not, HF may complain)
+        # Если labels = ClassLabel (как после download.py), стратификация будет работать нормально.
         try:
             split = train.train_test_split(
                 test_size=self.val_size,
@@ -146,7 +146,6 @@ class AGNewsDataModule(LightningDataModule):
             train_ds = split["train"]
             val_ds = split["test"]
         except Exception:
-            # fallback without stratify to avoid crashing completely
             split = train.train_test_split(test_size=self.val_size, seed=self.seed)
             train_ds = split["train"]
             val_ds = split["test"]

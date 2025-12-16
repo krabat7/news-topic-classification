@@ -7,6 +7,7 @@ from hydra import compose, initialize_config_dir
 from omegaconf import OmegaConf
 
 from news_topic_classifier.data.datamodule import AGNewsDataModule, encode
+from news_topic_classifier.data.download import ensure_data
 from news_topic_classifier.models.lightning_module import NewsClassifierModule
 from news_topic_classifier.utils.seed import set_seed
 
@@ -49,6 +50,19 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
 
     set_seed(int(cfg.seed))
 
+    # 1) Гарантируем данные (DVC pull или скачивание), чтобы не ходить в интернет
+    data_dir_cfg = getattr(cfg.data, "data_dir", None)
+    data_dir_path = repo_root / str(data_dir_cfg) if data_dir_cfg is not None else None
+
+    if data_dir_path is not None:
+        data_dir_path = ensure_data(
+            repo_root=repo_root,
+            dataset_name=str(cfg.data.dataset_name),
+            data_dir=data_dir_path,
+            text_joiner=str(cfg.data.text_joiner),
+        )
+
+    # 2) DataModule читает load_from_disk(data_dir)
     dm = AGNewsDataModule(
         dataset_name=str(cfg.data.dataset_name),
         text_joiner=str(cfg.data.text_joiner),
@@ -59,6 +73,7 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
         min_freq=int(cfg.data.min_freq),
         max_length=int(cfg.max_length),
         seed=int(cfg.seed),
+        data_dir=str(data_dir_path) if data_dir_path is not None else None,
     )
     dm.setup()
 
@@ -72,7 +87,7 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
     if not ckpt_path.exists():
         raise FileNotFoundError(
             f"Checkpoint not found: {ckpt_path}\n"
-            f"Tip: run training first and ensure best.ckpt exists in outputs/checkpoints/."
+            "Tip: run training first and ensure best.ckpt exists in outputs/checkpoints/."
         )
 
     model = NewsClassifierModule.load_from_checkpoint(
