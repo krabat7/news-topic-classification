@@ -1,7 +1,10 @@
 defaults:
+  - paths: default
   - data: ag_news
   - model: baseline
-  - trainer: default
+  - trainer:
+    enable_checkpointing: true
+    default_root_dir: ${paths.outputs_dir}
   - logging: mlflow
   - _self_
 

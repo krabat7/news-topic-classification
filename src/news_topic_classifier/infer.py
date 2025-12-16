@@ -24,8 +24,8 @@ def find_repo_root(start: Path) -> Path:
 
 
 def _to_tensor_batch(token_ids: list[list[int]], max_len: int) -> dict[str, torch.Tensor]:
-    input_ids = []
-    attention_mask = []
+    input_ids: list[list[int]] = []
+    attention_mask: list[list[int]] = []
     for ids in token_ids:
         ids = ids[:max_len]
         mask = [1] * len(ids)
@@ -50,16 +50,13 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
 
     set_seed(int(cfg.seed))
 
-    data_dir_cfg = getattr(cfg.data, "data_dir", None)
-    data_dir_path = repo_root / str(data_dir_cfg) if data_dir_cfg is not None else None
-
-    if data_dir_path is not None:
-        data_dir_path = ensure_data(
-            repo_root=repo_root,
-            dataset_name=str(cfg.data.dataset_name),
-            data_dir=data_dir_path,
-            text_joiner=str(cfg.data.text_joiner),
-        )
+    data_dir = repo_root / str(cfg.paths.data_dir)
+    ensure_data(
+        repo_root=repo_root,
+        dataset_name=str(cfg.data.dataset_name),
+        data_dir=data_dir,
+        text_joiner=str(cfg.data.text_joiner),
+    )
 
     dm = AGNewsDataModule(
         dataset_name=str(cfg.data.dataset_name),
@@ -71,22 +68,17 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
         min_freq=int(cfg.data.min_freq),
         max_length=int(cfg.max_length),
         seed=int(cfg.seed),
-        data_dir=str(data_dir_path) if data_dir_path is not None else None,
+        data_dir=str(data_dir),
     )
     dm.setup()
-
     if dm.vocab is None:
         raise RuntimeError("Vocab was not built (dm.vocab is None).")
 
     ckpt_path = Path(str(cfg.infer.ckpt_path))
     if not ckpt_path.is_absolute():
         ckpt_path = repo_root / ckpt_path
-
     if not ckpt_path.exists():
-        raise FileNotFoundError(
-            f"Checkpoint not found: {ckpt_path}\n"
-            "Tip: run training first and ensure best.ckpt exists in outputs/checkpoints/."
-        )
+        raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}")
 
     model = NewsClassifierModule.load_from_checkpoint(
         checkpoint_path=str(ckpt_path),

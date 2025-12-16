@@ -38,16 +38,13 @@ def train_from_config(overrides: list[str] | None = None) -> None:
 
     set_seed(int(cfg.seed))
 
-    data_dir_cfg = getattr(cfg.data, "data_dir", None)
-    data_dir_path = repo_root / str(data_dir_cfg) if data_dir_cfg is not None else None
-
-    if data_dir_path is not None:
-        data_dir_path = ensure_data(
-            repo_root=repo_root,
-            dataset_name=str(cfg.data.dataset_name),
-            data_dir=data_dir_path,
-            text_joiner=str(cfg.data.text_joiner),
-        )
+    data_dir = repo_root / str(cfg.paths.data_dir)
+    ensure_data(
+        repo_root=repo_root,
+        dataset_name=str(cfg.data.dataset_name),
+        data_dir=data_dir,
+        text_joiner=str(cfg.data.text_joiner),
+    )
 
     dm = AGNewsDataModule(
         dataset_name=str(cfg.data.dataset_name),
@@ -59,7 +56,7 @@ def train_from_config(overrides: list[str] | None = None) -> None:
         min_freq=int(cfg.data.min_freq),
         max_length=int(cfg.max_length),
         seed=int(cfg.seed),
-        data_dir=str(data_dir_path) if data_dir_path is not None else None,
+        data_dir=str(data_dir),
     )
     dm.setup()
     assert dm.vocab is not None
@@ -106,7 +103,8 @@ def train_from_config(overrides: list[str] | None = None) -> None:
 def main() -> None:
     if len(sys.argv) < 2:
         raise SystemExit(
-            "Usage: python -m news_topic_classifier.commands <train|infer> [hydra_overrides...]"
+            "Usage: poetry run python -m news_topic_classifier.commands\n"
+            "  <train|infer> [hydra_overrides...]"
         )
 
     command = sys.argv[1]
