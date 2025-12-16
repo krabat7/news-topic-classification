@@ -1,6 +1,7 @@
 defaults:
   - data: ag_news
   - model: baseline
+  - logging: mlflow
   - _self_
 
 seed: 42

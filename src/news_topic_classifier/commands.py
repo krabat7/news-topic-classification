@@ -51,6 +51,7 @@ def train_from_config(overrides: list[str] | None = None) -> None:
 
     dm.setup()
     assert dm.vocab is not None
+
     model = NewsClassifierModule(
         vocab_size=dm.vocab.size,
         embedding_dim=int(cfg.model.embedding_dim),

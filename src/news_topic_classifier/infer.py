@@ -8,6 +8,7 @@ from omegaconf import OmegaConf
 
 from news_topic_classifier.data.datamodule import AGNewsDataModule, encode
 from news_topic_classifier.models.lightning_module import NewsClassifierModule
+from news_topic_classifier.utils.seed import set_seed
 
 
 def find_repo_root(start: Path) -> Path:
@@ -45,6 +46,8 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
 
     with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
         cfg = compose(config_name="infer", overrides=overrides)
+
+    set_seed(int(cfg.seed))
 
     dm = AGNewsDataModule(
         dataset_name=str(cfg.data.dataset_name),
@@ -91,15 +94,15 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
     if len(texts) == 0:
         raise ValueError("configs/infer.yaml: infer.texts is empty")
 
-    token_ids = []
+    token_ids: list[list[int]] = []
     for t in texts:
-        ids, _ = encode(t, dm.vocab, int(cfg.max_length))
+        ids, _ = encode(str(t), dm.vocab, int(cfg.max_length))
         token_ids.append(ids)
 
     batch = _to_tensor_batch(token_ids, max_len=int(cfg.max_length))
     batch = {k: v.to(device) for k, v in batch.items()}
 
-    with torch.no_grad():
+    with torch.inference_mode():
         logits = model.model(batch["input_ids"], batch["attention_mask"])
         probs = torch.softmax(logits, dim=-1)
         preds = torch.argmax(probs, dim=-1).cpu().tolist()
