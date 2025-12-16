@@ -1,0 +1,6 @@
+outs:
+- md5: fb6fd9d60e951f5a2b7dfea9b6527d03.dir
+  size: 118274244
+  nfiles: 15
+  hash: md5
+  path: ag_news
