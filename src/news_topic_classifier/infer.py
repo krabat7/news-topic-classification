@@ -6,7 +6,7 @@ import torch
 from hydra import compose, initialize_config_dir
 from omegaconf import OmegaConf
 
-from news_topic_classifier.data.datamodule import AGNewsDataModule, encode
+from news_topic_classifier.data.datamodule import AGNewsDataModule, encode, load_vocab
 from news_topic_classifier.data.download import ensure_data
 from news_topic_classifier.models.lightning_module import NewsClassifierModule
 from news_topic_classifier.utils.seed import set_seed
@@ -51,12 +51,17 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
     set_seed(int(cfg.seed))
 
     data_dir = repo_root / str(cfg.paths.data_dir)
+    vocab_path = repo_root / str(cfg.paths.vocab_path)
     ensure_data(
         repo_root=repo_root,
         dataset_name=str(cfg.data.dataset_name),
         data_dir=data_dir,
         text_joiner=str(cfg.data.text_joiner),
     )
+
+    if not vocab_path.exists():
+        raise FileNotFoundError(f"Vocab file not found at {vocab_path}. Run train first.")
+    vocab = load_vocab(vocab_path)
 
     dm = AGNewsDataModule(
         dataset_name=str(cfg.data.dataset_name),
@@ -69,6 +74,7 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
         max_length=int(cfg.max_length),
         seed=int(cfg.seed),
         data_dir=str((repo_root / str(cfg.paths.data_dir)).as_posix()),
+        vocab=vocab,
     )
     dm.setup()
     if dm.vocab is None:

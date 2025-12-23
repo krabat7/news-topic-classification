@@ -9,7 +9,7 @@ from omegaconf import OmegaConf
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import MLFlowLogger
 
-from news_topic_classifier.data.datamodule import AGNewsDataModule
+from news_topic_classifier.data.datamodule import AGNewsDataModule, save_vocab
 from news_topic_classifier.data.download import ensure_data
 from news_topic_classifier.infer import infer_from_config
 from news_topic_classifier.models.lightning_module import NewsClassifierModule
@@ -60,6 +60,8 @@ def train_from_config(overrides: list[str] | None = None) -> None:
     )
     dm.setup()
     assert dm.vocab is not None
+
+    save_vocab(dm.vocab, repo_root / str(cfg.paths.vocab_path))
 
     model = NewsClassifierModule(
         vocab_size=dm.vocab.size,

@@ -176,6 +176,9 @@ __marimo__/
 artifacts/
 mlruns/
 outputs/
+vocab/
+dvcstore/
+.dvc/cache/
 
 # -----------------------------
 # Data (tracked by DVC)

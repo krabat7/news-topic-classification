@@ -1,2 +1,3 @@
 data_dir: data/ag_news
 outputs_dir: outputs
+vocab_path: ${paths.outputs_dir}/artifacts/vocab.json

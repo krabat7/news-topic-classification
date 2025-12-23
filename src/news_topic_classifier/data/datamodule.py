@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -67,6 +68,19 @@ def collate_batch(batch: list[dict]) -> dict:
     }
 
 
+def save_vocab(vocab: Vocab, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = {"itos": vocab.itos}
+    path.write_text(json.dumps(data))
+
+
+def load_vocab(path: Path) -> Vocab:
+    data = json.loads(path.read_text())
+    itos = list(data["itos"])
+    stoi = {tok: idx for idx, tok in enumerate(itos)}
+    return Vocab(stoi=stoi, itos=itos)
+
+
 class AGNewsDataModule(LightningDataModule):
     def __init__(
         self,
@@ -80,6 +94,7 @@ class AGNewsDataModule(LightningDataModule):
         max_length: int,
         seed: int,
         data_dir: str | None = None,
+        vocab: Vocab | None = None,
     ) -> None:
         super().__init__()
         self.dataset_name = dataset_name
@@ -92,8 +107,7 @@ class AGNewsDataModule(LightningDataModule):
         self.max_length = max_length
         self.seed = seed
         self.data_dir = data_dir
-
-        self.vocab: Vocab | None = None
+        self.vocab: Vocab | None = vocab
         self.train_ds = None
         self.val_ds = None
         self.test_ds = None
@@ -149,14 +163,18 @@ class AGNewsDataModule(LightningDataModule):
             train_ds = split["train"]
             val_ds = split["test"]
 
-        self.vocab = build_vocab(
-            texts=train_ds["text"],
-            max_vocab_size=self.max_vocab_size,
-            min_freq=self.min_freq,
-        )
+        if self.vocab is None:
+            self.vocab = build_vocab(
+                texts=train_ds["text"],
+                max_vocab_size=self.max_vocab_size,
+                min_freq=self.min_freq,
+            )
+        vocab = self.vocab
 
         def to_ids(example: dict) -> dict:
-            ids, mask = encode(example["text"], self.vocab, self.max_length)
+            if vocab is None:
+                raise RuntimeError("Vocab is not initialized")
+            ids, mask = encode(example["text"], vocab, self.max_length)
             return {
                 "input_ids": ids,
                 "attention_mask": mask,
