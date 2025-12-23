@@ -116,10 +116,7 @@ class AGNewsDataModule(LightningDataModule):
         if self.data_dir is not None:
             p = Path(self.data_dir)
             if not p.exists():
-                raise FileNotFoundError(
-                    f"Data dir not found: {p}. "
-                    "Run train/infer which should call ensure_data() (DVC pull / download)."
-                )
+                raise FileNotFoundError(f"Нет данных: {p}. ")
             return load_from_disk(str(p))
         return load_dataset(self.dataset_name)
 
@@ -144,7 +141,7 @@ class AGNewsDataModule(LightningDataModule):
             elif "class_index" in train.column_names:
                 train = train.rename_column("class_index", "labels")
             else:
-                raise ValueError(f"No labels column found. Columns: {train.column_names}")
+                raise ValueError(f"Нет колонки labels. Колонки: {train.column_names}")
 
         uniq = sorted(set(train["labels"]))
         if uniq == [1, 2, 3, 4]:
@@ -173,7 +170,7 @@ class AGNewsDataModule(LightningDataModule):
 
         def to_ids(example: dict) -> dict:
             if vocab is None:
-                raise RuntimeError("Vocab is not initialized")
+                raise RuntimeError("Словарь не инициализирован")
             ids, mask = encode(example["text"], vocab, self.max_length)
             return {
                 "input_ids": ids,
@@ -223,7 +220,7 @@ class AGNewsDataModule(LightningDataModule):
 
     def test_dataloader(self) -> DataLoader:
         if self.test_ds is None:
-            raise RuntimeError("Test dataset is not available.")
+            raise RuntimeError("Тестовый датасет недоступен")
         return DataLoader(
             self.test_ds,
             batch_size=self.batch_size,

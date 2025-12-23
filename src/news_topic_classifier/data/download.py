@@ -41,7 +41,7 @@ def download_data(dataset_name: str, out_dir: Path, text_joiner: str) -> None:
         elif "class_index" in cols:
             label_key = "class_index"
         else:
-            raise ValueError("No label column found")
+            raise ValueError("Нет колонки label/class_index")
 
         split = split.rename_column(label_key, "labels")
 
@@ -51,7 +51,7 @@ def download_data(dataset_name: str, out_dir: Path, text_joiner: str) -> None:
         elif uniq == [0, 1, 2, 3]:
             pass
         else:
-            raise ValueError(f"Unexpected label values: {uniq[:20]}")
+            raise ValueError(f"Неожиданные значения меток: {uniq[:20]}")
 
         class_label = ClassLabel(num_classes=4, names=AG_NEWS_CLASS_NAMES)
         split = split.cast_column("labels", class_label)

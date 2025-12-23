@@ -25,7 +25,7 @@ def find_repo_root(start: Path) -> Path:
         if cur.parent == cur:
             break
         cur = cur.parent
-    raise RuntimeError("Repo root not found (could not locate .git directory)")
+    raise RuntimeError("Не найден корень репозитория (.git)")
 
 
 def train_from_config(overrides: list[str] | None = None) -> None:

@@ -20,7 +20,7 @@ def find_repo_root(start: Path) -> Path:
         if cur.parent == cur:
             break
         cur = cur.parent
-    raise RuntimeError("Repo root not found (could not locate .git directory)")
+    raise RuntimeError("Не найден корень репозитория (.git)")
 
 
 def _to_tensor_batch(token_ids: list[list[int]], max_len: int) -> dict[str, torch.Tensor]:
@@ -60,7 +60,7 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
     )
 
     if not vocab_path.exists():
-        raise FileNotFoundError(f"Vocab file not found at {vocab_path}. Run train first.")
+        raise FileNotFoundError(f"Нет словаря: {vocab_path}. Сначала запустите train.")
     vocab = load_vocab(vocab_path)
 
     dm = AGNewsDataModule(
@@ -78,13 +78,13 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
     )
     dm.setup()
     if dm.vocab is None:
-        raise RuntimeError("Vocab was not built (dm.vocab is None).")
+        raise RuntimeError("Словарь не построен (dm.vocab is None)")
 
     ckpt_path = Path(str(cfg.infer.ckpt_path))
     if not ckpt_path.is_absolute():
         ckpt_path = repo_root / ckpt_path
     if not ckpt_path.exists():
-        raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}")
+        raise FileNotFoundError(f"Нет чекпоинта: {ckpt_path}")
 
     model = NewsClassifierModule.load_from_checkpoint(
         checkpoint_path=str(ckpt_path),
@@ -103,7 +103,7 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
 
     texts = list(cfg.infer.texts)
     if len(texts) == 0:
-        raise ValueError("configs/infer.yaml: infer.texts is empty")
+        raise ValueError("configs/infer.yaml: infer.texts пуст")
 
     token_ids: list[list[int]] = []
     for t in texts:
@@ -123,10 +123,10 @@ def infer_from_config(overrides: list[str] | None = None) -> None:
 
     for text, pred, conf in zip(texts, preds, confs, strict=True):
         name = labels[pred] if 0 <= pred < len(labels) else str(pred)
-        print(f"TEXT: {text}")
-        print(f"PRED: {pred} ({name}), CONF: {conf:.4f}")
-        print("-" * 60)
+        print(f"Текст: {text}")
+        print(f"Класс: {name} ({pred}), вероятность: {conf:.4f}")
+        print("-" * 20)
 
     if bool(cfg.infer.print_config):
-        print("\nResolved config:")
+        print("Конфиг:")
         print(OmegaConf.to_yaml(cfg, resolve=True))
